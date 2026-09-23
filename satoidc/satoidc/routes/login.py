@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from satoidc.auth.nostr import NostrKeyError, keys_from_private_key
 from satoidc.auth.security import verify_password
 from satoidc.models import User
 from satoidc.models.database import get_session
@@ -109,8 +110,9 @@ async def login_post(
 
 
 @router.page("/login")
-def login_page(
+async def login_page(
     request: Request,
+    session: Session,
     redirect_to: Optional[str] = "/",
     err: Optional[str] = None,
 ):
@@ -161,6 +163,40 @@ def login_page(
             ui.button("Cancel", on_click=lambda: ui.navigate.to("/")).props(
                 "outline"
             ).classes("w-full")
+
+        ui.separator().classes("my-5")
+        ui.label("Nostr").classes("text-lg font-semibold")
+        ui.label(
+            "Entre com uma chave privada Nostr existente. A chave nao e armazenada; apenas a chave publica fica vinculada a sua conta."
+        ).classes("text-gray-500 text-sm")
+        nostr_key = ui.input("nsec ou chave privada hex").props(
+            "type='password' autocomplete='off'"
+        ).classes("w-full")
+        nostr_error = ui.label("").classes("text-red-500 mt-1")
+
+        async def login_with_nostr():
+            nostr_error.set_text("")
+            try:
+                keys = keys_from_private_key(nostr_key.value or "")
+            except NostrKeyError as exc:
+                nostr_error.set_text(str(exc))
+                return
+
+            user = await session.scalar(
+                select(User).where(User.nostr_pubkey == keys.public_key_hex)
+            )
+            if not user:
+                nostr_error.set_text(
+                    "Nenhuma conta encontrada para esta chave. Crie a conta com Nostr primeiro."
+                )
+                return
+
+            request.session["user_id"] = user.id.hex
+            ui.navigate.to(redirect_to)
+
+        ui.button("Entrar com Nostr", on_click=login_with_nostr).classes(
+            "w-full mt-2"
+        )
 
     with ui.row().classes("gap-4 mt-4"):
         ui.link("← Home", "/").classes("text-blue-500 underline")

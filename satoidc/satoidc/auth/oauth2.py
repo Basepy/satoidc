@@ -67,6 +67,7 @@ def generate_user_info(user, scope):
     if "profile" in scope:
         user_info["name"] = user.nickname
         user_info["lnurl_pubkey"] = user.lnurl_pubkey
+        user_info["nostr_pubkey"] = user.nostr_pubkey
     return user_info
 
 

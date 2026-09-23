@@ -44,6 +44,9 @@ class User(TimestampMixin):
     password_hash: Mapped[Optional[str]] = mapped_column(nullable=True)
     nickname: Mapped[str] = mapped_column(default="Satoshi")
     is_active: Mapped[bool] = mapped_column(default=True)
+    nostr_pubkey: Mapped[Optional[str]] = mapped_column(
+        unique=True, nullable=True, index=True, default=None
+    )
 
     # Relationships
     permissions: Mapped[list["Permission"]] = relationship(

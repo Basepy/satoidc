@@ -7,6 +7,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
+from satoidc.auth.nostr import (
+    NostrKeyError,
+    generate_keys,
+    keys_from_private_key,
+)
 from satoidc.auth.security import hash_password
 from satoidc.models import User
 from satoidc.models.database import get_session
@@ -106,6 +111,82 @@ async def register_page(
             ui.button("Cancel", on_click=lambda: ui.navigate.to("/")).props(
                 "outline"
             ).classes("w-full")
+
+        ui.separator().classes("my-6")
+        ui.label("Criar conta com Nostr").classes("text-lg font-semibold")
+        ui.label(
+            "Gere uma chave Nostr nova ou use uma chave privada existente. Guarde o nsec com cuidado: ele nao sera armazenado."
+        ).classes("text-gray-500 text-sm")
+
+        nostr_nickname = ui.input("Nickname (opcional)").classes("w-full")
+        nostr_key = ui.input("nsec ou chave privada hex existente").props(
+            "type='password' autocomplete='off'"
+        ).classes("w-full")
+        nostr_error = ui.label("").classes("text-red-500 mt-1")
+        nostr_ok = ui.label("").classes("text-green-600 mt-1")
+        nostr_result = ui.column().classes("w-full gap-2")
+
+        async def create_nostr_user(keys):
+            nostr_error.set_text("")
+            nostr_ok.set_text("")
+            nostr_result.clear()
+
+            db_user = await session.scalar(
+                select(User).where(User.nostr_pubkey == keys.public_key_hex)
+            )
+            if db_user:
+                nostr_error.set_text("Esta chave Nostr ja esta vinculada a uma conta.")
+                return
+
+            nickname_value = (nostr_nickname.value or "").strip() or "Satoshi"
+            user = User(
+                lnurl_pubkey=None,
+                email=None,
+                login=None,
+                nickname=nickname_value,
+                password_hash=None,
+                nostr_pubkey=keys.public_key_hex,
+            )
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+            request.session["user_id"] = user.id.hex
+
+            nostr_ok.set_text("Conta Nostr criada e autenticada.")
+            with nostr_result:
+                ui.label("Salve sua chave privada Nostr antes de continuar.").classes(
+                    "font-semibold"
+                )
+                ui.textarea("nsec", value=keys.nsec).props("readonly").classes(
+                    "w-full"
+                )
+                ui.input("npub", value=keys.npub).props("readonly").classes(
+                    "w-full"
+                )
+                ui.button(
+                    "Continuar",
+                    on_click=lambda: ui.navigate.to(redirect_to),
+                ).classes("w-full")
+
+        async def generate_nostr_account():
+            await create_nostr_user(generate_keys())
+
+        async def create_with_existing_nostr_key():
+            try:
+                keys = keys_from_private_key(nostr_key.value or "")
+            except NostrKeyError as exc:
+                nostr_error.set_text(str(exc))
+                return
+            await create_nostr_user(keys)
+
+        with ui.row().classes("gap-3 mt-4"):
+            ui.button("Gerar conta Nostr", on_click=generate_nostr_account).classes(
+                "w-full"
+            )
+            ui.button(
+                "Usar chave existente",
+                on_click=create_with_existing_nostr_key,
+            ).props("outline").classes("w-full")
 
     with ui.row().classes("gap-4 mt-4"):
         ui.link(
