@@ -3,11 +3,40 @@
 {% block title %}Novo client | SatOIDC{% endblock %}
 
 {% block content %}
-  <section class="container center-layout">
-    <div class="card panel-card consent-card">
-      <span class="eyebrow">OAuth2</span>
-      <h1>Criar client</h1>
-      <p class="lead">Cadastre uma aplicacao para usar os fluxos OpenID Connect do SatOIDC.</p>
+  <main class="account-shell">
+    <aside class="account-sidebar">
+      <a class="account-brand" href="/">
+        <span class="oidc-logo compact"><span class="oidc-cube" aria-hidden="true"></span></span>
+        <span>SatOIDC <em>Conta</em></span>
+      </a>
+      <nav class="side-nav">
+        <a href="/">Inicio</a>
+        <a href="#">Informacoes pessoais</a>
+        <a href="#">Seguranca</a>
+        <a href="#">Carteira Nostr</a>
+        <a href="#">Apps conectados</a>
+        <a class="active" href="/create_client">Acesso de desenvolvedor</a>
+      </nav>
+    </aside>
+
+    <section class="account-main">
+      <header class="account-topbar">
+        <label class="search-box">
+          <span>Pesquisar</span>
+          <input placeholder="Pesquisar na Conta SatOIDC" />
+        </label>
+        <a class="button outline small" href="/logout">Sair</a>
+        <span class="avatar">S</span>
+      </header>
+
+      <section class="developer-panel create-panel">
+        <div class="panel-heading">
+          <div>
+            <h1>Novo cliente</h1>
+            <p>Cadastre uma aplicacao para usar os fluxos OpenID Connect do SatOIDC.</p>
+          </div>
+          <a class="button outline" href="/">Voltar</a>
+        </div>
 
       {% if created %}
         <p class="message success">Client criado com sucesso.</p>
@@ -59,6 +88,7 @@ refresh_token</textarea>
           <a class="button outline" href="/">Voltar</a>
         </div>
       </form>
-    </div>
-  </section>
+      </section>
+    </section>
+  </main>
 {% endblock %}

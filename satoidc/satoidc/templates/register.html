@@ -3,20 +3,17 @@
 {% block title %}Criar conta | SatOIDC{% endblock %}
 
 {% block content %}
-  <section class="container auth-layout">
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <span class="eyebrow">Nova identidade</span>
-        <h1>Crie uma conta para seus fluxos OIDC.</h1>
-        <p class="lead">
-          Cadastre uma conta tradicional ou gere uma identidade Nostr para acessar aplicacoes conectadas ao SatOIDC.
-        </p>
-        <div class="visual-hill" aria-hidden="true"></div>
+  <main class="auth-page register-page">
+    <section class="auth-card auth-card-register">
+      <div class="auth-copy">
+        <a class="oidc-logo" href="/" aria-label="SatOIDC">
+          <span class="oidc-cube" aria-hidden="true"></span>
+        </a>
+        <h1>Criar uma Conta SatOIDC</h1>
+        <p>Uma conta para entrar em apps Bitcoin com senha ou com sua chave Nostr.</p>
       </div>
 
-      <section class="card form-card">
-        <span class="eyebrow">SatOIDC</span>
-        <h2>Criar conta</h2>
+      <div class="auth-form-panel">
 
         {% if err == 'login' %}
           <p class="message error">Use um login com 6 a 30 caracteres: apenas letras minusculas e numeros.</p>
@@ -47,7 +44,10 @@
               <strong>Chave publica</strong>
               <code>{{ generated_keys.npub }}</code>
             </div>
-            <a class="button block" href="{{ redirect_to }}">Continuar</a>
+            <div class="auth-actions compact">
+              <a href="/login?redirect_to={{ redirect_to_encoded }}">Ja tenho conta</a>
+              <a class="button" href="{{ redirect_to }}">Continuar</a>
+            </div>
           </div>
         {% else %}
           <form class="stack" method="post" action="/register">
@@ -61,49 +61,58 @@
               <input class="input" name="email" type="email" autocomplete="email" required />
             </label>
             <label class="field">
-              <span>Nome de exibicao</span>
+              <span>Apelido (opcional)</span>
               <input class="input" name="nickname" autocomplete="nickname" />
             </label>
-            <label class="field">
-              <span>Senha</span>
-              <input class="input" name="password" type="password" autocomplete="new-password" required />
+            <div class="split-fields">
+              <label class="field">
+                <span>Senha</span>
+                <input class="input" name="password" type="password" autocomplete="new-password" required />
+              </label>
+              <label class="field">
+                <span>Confirmar</span>
+                <input class="input" name="confirm" type="password" autocomplete="new-password" required />
+              </label>
+            </div>
+            <p class="helper-text">8 ou mais caracteres com maiuscula, minuscula, numero e simbolo.</p>
+
+            <label class="check-row">
+              <input type="checkbox" required />
+              <span>Li e aceito os <a href="#">Termos de Servico</a>.</span>
             </label>
-            <label class="field">
-              <span>Confirmar senha</span>
-              <input class="input" name="confirm" type="password" autocomplete="new-password" required />
-            </label>
-            <button class="button block" type="submit">Criar conta</button>
+
+            <div class="divider"><span>ou</span></div>
+
+            <button class="wallet-button" type="submit" formaction="/register/nostr/generate" formnovalidate>
+              <span class="wallet-dot">&#9889;</span>
+              Criar com Nostr
+            </button>
+
+            <div class="auth-actions">
+              <a href="/login?redirect_to={{ redirect_to_encoded }}">Ja tenho conta</a>
+              <button class="button" type="submit">Criar conta</button>
+            </div>
           </form>
 
-          <div class="section-divider"></div>
-
-          <div class="stack">
-            <h3>Criar conta com Nostr</h3>
-            <p class="message">Gere uma chave nova ou use uma chave privada existente. O SatOIDC guarda apenas a chave publica.</p>
-            <form class="stack" method="post" action="/register/nostr/generate">
-              <input type="hidden" name="redirect_to" value="{{ redirect_to }}" />
-              <label class="field">
-                <span>Nome de exibicao</span>
-                <input class="input" name="nickname" autocomplete="nickname" />
-              </label>
-              <button class="button secondary block" type="submit">Gerar conta Nostr</button>
-            </form>
-            <form class="stack" method="post" action="/register/nostr">
-              <input type="hidden" name="redirect_to" value="{{ redirect_to }}" />
-              <label class="field">
-                <span>Usar chave existente</span>
-                <input class="input" name="nostr_private_key" type="password" autocomplete="off" placeholder="nsec ou chave privada hex" required />
-              </label>
-              <button class="button outline block" type="submit">Usar chave existente</button>
-            </form>
-          </div>
+          <form class="stack slim-stack" method="post" action="/register/nostr">
+            <input type="hidden" name="redirect_to" value="{{ redirect_to }}" />
+            <label class="field">
+              <span>Usar chave Nostr existente</span>
+              <input class="input" name="nostr_private_key" type="password" autocomplete="off" placeholder="nsec ou chave privada hex" required />
+            </label>
+            <button class="button outline" type="submit">Usar chave existente</button>
+          </form>
         {% endif %}
+      </div>
+    </section>
 
-        <div class="actions" style="margin-top: 22px;">
-          <a href="/login?redirect_to={{ redirect_to_encoded }}">Ja tenho conta</a>
-          <a href="/">Voltar</a>
-        </div>
-      </section>
-    </div>
-  </section>
+    <footer class="auth-footer">
+      <span>Portugues (Brasil)</span>
+      <nav>
+        <a href="#">Ajuda</a>
+        <a href="#">Privacidade</a>
+        <a href="#">Termos</a>
+      </nav>
+    </footer>
+  </main>
 {% endblock %}

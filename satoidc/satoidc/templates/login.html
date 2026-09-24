@@ -3,20 +3,17 @@
 {% block title %}Entrar | SatOIDC{% endblock %}
 
 {% block content %}
-  <section class="container auth-layout">
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <span class="eyebrow">Acesso seguro</span>
-        <h1>Entre com sua identidade Bitcoin.</h1>
-        <p class="lead">
-          Use login tradicional ou Nostr para continuar o fluxo OpenID Connect.
-        </p>
-        <div class="visual-hill" aria-hidden="true"></div>
+  <main class="auth-page">
+    <section class="auth-card auth-card-login">
+      <div class="auth-copy">
+        <a class="oidc-logo" href="/" aria-label="SatOIDC">
+          <span class="oidc-cube" aria-hidden="true"></span>
+        </a>
+        <h1>Fazer login</h1>
+        <p>Use sua Conta SatOIDC para continuar no aplicativo.</p>
       </div>
 
-      <section class="card form-card">
-        <span class="eyebrow">SatOIDC</span>
-        <h2>Entrar</h2>
+      <div class="auth-form-panel">
 
         {% if err == 'invalid' %}
           <p class="message error">Credenciais invalidas.</p>
@@ -44,26 +41,38 @@
             <input class="input" name="password" type="password" autocomplete="current-password" required />
           </label>
 
-          <button class="button block" type="submit">Entrar</button>
+          <p class="helper-text">Em um computador compartilhado, use uma janela privada e saia da conta ao terminar.</p>
+
+          <div class="auth-actions">
+            <a href="/register?redirect_to={{ redirect_to_encoded }}">Criar conta</a>
+            <button class="button" type="submit">Entrar</button>
+          </div>
         </form>
 
-        <div class="section-divider"></div>
+        <div class="divider"><span>ou</span></div>
 
-        <form class="stack" method="post" action="/login/nostr">
+        <form class="nostr-submit" method="post" action="/login/nostr">
           <input type="hidden" name="redirect_to" value="{{ redirect_to }}" />
           <label class="field">
             <span>Entrar com Nostr</span>
             <input class="input" name="nostr_private_key" type="password" autocomplete="off" placeholder="nsec ou chave privada hex" required />
           </label>
-          <p class="message">A chave privada nao e armazenada. Usamos ela apenas para identificar a chave publica vinculada.</p>
-          <button class="button secondary block" type="submit">Entrar com Nostr</button>
+          <p class="helper-text">A chave privada nao e armazenada. Ela identifica apenas a chave publica vinculada.</p>
+          <div class="auth-actions compact">
+            <span></span>
+            <button class="wallet-button" type="submit"><span class="wallet-dot">&#9889;</span>Entrar com Nostr</button>
+          </div>
         </form>
+      </div>
+    </section>
 
-        <div class="actions" style="margin-top: 22px;">
-          <a href="/register?redirect_to={{ redirect_to_encoded }}">Criar conta</a>
-          <a href="/">Voltar</a>
-        </div>
-      </section>
-    </div>
-  </section>
+    <footer class="auth-footer">
+      <span>Portugues (Brasil)</span>
+      <nav>
+        <a href="#">Ajuda</a>
+        <a href="#">Privacidade</a>
+        <a href="#">Termos</a>
+      </nav>
+    </footer>
+  </main>
 {% endblock %}

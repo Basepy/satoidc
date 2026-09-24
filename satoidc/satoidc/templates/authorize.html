@@ -3,10 +3,18 @@
 {% block title %}Autorizar aplicacao | SatOIDC{% endblock %}
 
 {% block content %}
-  <section class="container center-layout">
-    <div class="card panel-card consent-card">
-      <span class="eyebrow">Consentimento</span>
-      <h1>Autorizar aplicacao</h1>
+  <main class="auth-page">
+    <section class="auth-card consent-layout">
+      <div class="auth-copy">
+        <div class="consent-brand-row">
+          <span class="oidc-logo compact"><span class="oidc-cube" aria-hidden="true"></span></span>
+          <span class="app-chip">[A]</span>
+        </div>
+        <h1>[Nome do app] quer acessar sua Conta SatOIDC</h1>
+        <span class="account-pill">S&nbsp;&nbsp; satoshi@exemplo.com</span>
+      </div>
+
+      <div class="auth-form-panel consent-panel">
 
       {% if error_body %}
         <p class="message error">Nao foi possivel validar a solicitacao OAuth.</p>
@@ -19,22 +27,34 @@
           <a class="button outline" href="/">Voltar</a>
         </div>
       {% else %}
-        <p class="lead">Uma aplicacao esta solicitando acesso a sua identidade SatOIDC.</p>
+        <h2>Isso permitira que [Nome do app]:</h2>
 
-        <div class="meta-grid" style="margin: 22px 0;">
-          <div class="meta-item">
-            <strong>Client ID</strong>
-            <span>{{ request.query_params.get('client_id', 'Nao informado') }}</span>
+        <div class="permission-list">
+          <div class="permission-item">
+            <span class="permission-icon">ID</span>
+            <div>
+              <strong>Identificar voce</strong>
+              <span>Autenticacao e acesso ao seu identificador unico.</span>
+            </div>
           </div>
-          <div class="meta-item">
-            <strong>Escopos</strong>
-            <span>{{ request.query_params.get('scope', 'openid profile') }}</span>
+          <div class="permission-item">
+            <span class="permission-icon">P</span>
+            <div>
+              <strong>Ver seu perfil basico</strong>
+              <span>Nome e apelido.</span>
+            </div>
           </div>
-          <div class="meta-item">
-            <strong>Redirect</strong>
-            <span>{{ request.query_params.get('redirect_uri', 'Nao informado') }}</span>
+          <div class="permission-item">
+            <span class="permission-icon">@</span>
+            <div>
+              <strong>Ver seu endereco de e-mail</strong>
+              <span>satoshi@exemplo.com</span>
+            </div>
           </div>
         </div>
+
+        <p class="helper-text strong">Confirme que voce confia em [Nome do app]</p>
+        <p class="helper-text">Apos permitir, voce sera levado para {{ request.query_params.get('redirect_uri', 'redirect_uri') }}. Voce pode remover esse acesso a qualquer momento na sua conta.</p>
 
         <form class="stack" method="post" action="{{ action }}">
           <input type="hidden" name="csrf_token" value="{{ csrf }}" />
@@ -42,12 +62,22 @@
             <input type="hidden" name="{{ key }}" value="{{ value }}" />
           {% endfor %}
 
-          <div class="actions">
-            <button class="button" type="submit" name="decision" value="approve">Autorizar</button>
-            <button class="button outline" type="submit" name="decision" value="deny">Negar</button>
+          <div class="auth-actions compact">
+            <button class="link-button" type="submit" name="decision" value="deny">Cancelar</button>
+            <button class="button" type="submit" name="decision" value="approve">Permitir</button>
           </div>
         </form>
       {% endif %}
-    </div>
-  </section>
+      </div>
+    </section>
+
+    <footer class="auth-footer">
+      <span>Portugues (Brasil)</span>
+      <nav>
+        <a href="#">Ajuda</a>
+        <a href="#">Privacidade</a>
+        <a href="#">Termos</a>
+      </nav>
+    </footer>
+  </main>
 {% endblock %}

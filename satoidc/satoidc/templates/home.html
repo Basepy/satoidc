@@ -3,59 +3,100 @@
 {% block title %}SatOIDC | Clients{% endblock %}
 
 {% block content %}
-  <section class="container center-layout">
-    <div class="hero-grid">
-      <div class="hero-copy">
-        <span class="eyebrow">OpenID Connect Provider</span>
-        <h1>Identidade soberana para apps Bitcoin.</h1>
-        <p class="lead">
-          Gerencie clients OAuth2/OIDC e autentique usuarios com senha, Lightning e Nostr em um fluxo simples e verificavel.
-        </p>
-        <div class="actions">
-          <a class="button" href="/create_client">Criar client</a>
-          <a class="button secondary" href="/oauth/.well-known/openid-configuration">Discovery OIDC</a>
+  <main class="account-shell">
+    <aside class="account-sidebar">
+      <a class="account-brand" href="/">
+        <span class="oidc-logo compact"><span class="oidc-cube" aria-hidden="true"></span></span>
+        <span>SatOIDC <em>Conta</em></span>
+      </a>
+      <nav class="side-nav">
+        <a class="active" href="/">Inicio</a>
+        <a href="#">Informacoes pessoais</a>
+        <a href="#">Seguranca</a>
+        <a href="#">Carteira Nostr</a>
+        <a href="#">Apps conectados</a>
+        <a href="/create_client">Acesso de desenvolvedor</a>
+      </nav>
+    </aside>
+
+    <section class="account-main">
+      <header class="account-topbar">
+        <label class="search-box">
+          <span>Pesquisar</span>
+          <input placeholder="Pesquisar na Conta SatOIDC" />
+        </label>
+        <a class="button outline small" href="/logout">Sair</a>
+        <span class="avatar">S</span>
+      </header>
+
+      <section class="account-hero">
+        <span class="avatar large">S</span>
+        <h1>Bem-vindo, satoshi</h1>
+        <p>Gerencie suas informacoes, sua seguranca e seus clients OAuth em um so lugar.</p>
+      </section>
+
+      <section class="account-grid">
+        <article class="account-card">
+          <div>
+            <h2>Informacoes pessoais</h2>
+            <p>Dados basicos usados quando voce permite acesso ao seu perfil.</p>
+          </div>
+          <a href="#">Gerenciar informacoes</a>
+        </article>
+
+        <article class="account-card">
+          <div>
+            <h2>Seguranca</h2>
+            <p>Senha e chaves de acesso da sua conta.</p>
+          </div>
+          <a href="/login">Alterar senha</a>
+        </article>
+
+        <article class="account-card">
+          <div>
+            <h2>Carteira Nostr</h2>
+            <p>Status da chave publica vinculada para login com Nostr.</p>
+          </div>
+          <span class="status-pill">Vinculada</span>
+        </article>
+
+        <article class="account-card">
+          <div>
+            <h2>Acesso de desenvolvedor</h2>
+            <p>Registre clients OAuth2/OIDC para os seus apps.</p>
+          </div>
+          <a href="/create_client">Abrir painel do desenvolvedor</a>
+        </article>
+      </section>
+
+      <section class="developer-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Clients OAuth2</h2>
+            <p>Logado como {{ user_id }}.</p>
+          </div>
+          <a class="button" href="/create_client">Novo cliente</a>
         </div>
-      </div>
-      <div class="visual-hill" aria-hidden="true"></div>
-    </div>
 
-    <section class="card panel-card dashboard-grid" style="margin-top: 46px;">
-      <div>
-        <span class="eyebrow">Sessao</span>
-        <h2>Clients OAuth2</h2>
-        <p class="lead">Logado como <strong>{{ user_id }}</strong>.</p>
-      </div>
-
-      <div class="client-list">
-        {% for client in clients %}
-          <article class="client-card">
-            <h3>{{ client.client_metadata.get('client_name') or client.client_id }}</h3>
-            <div class="meta-grid">
-              <div class="meta-item">
-                <strong>Client ID</strong>
-                <span>{{ client.client_id }}</span>
+        <div class="client-list">
+          {% for client in clients %}
+            <article class="client-row">
+              <div>
+                <h3>{{ client.client_metadata.get('client_name') or client.client_id }}</h3>
+                <p>{{ client.client_metadata.get('client_uri') or '-' }}</p>
               </div>
-              <div class="meta-item">
-                <strong>URI</strong>
-                <span>{{ client.client_metadata.get('client_uri') or '-' }}</span>
+              <span>{{ client.client_metadata.get('scope') or 'openid profile' }}</span>
+            </article>
+          {% else %}
+            <article class="client-row empty">
+              <div>
+                <h3>Nenhum client cadastrado</h3>
+                <p>Crie o primeiro client para iniciar um fluxo OIDC.</p>
               </div>
-              <div class="meta-item">
-                <strong>Scope</strong>
-                <span>{{ client.client_metadata.get('scope') or '-' }}</span>
-              </div>
-              <div class="meta-item">
-                <strong>Auth method</strong>
-                <span>{{ client.client_metadata.get('token_endpoint_auth_method') or '-' }}</span>
-              </div>
-            </div>
-          </article>
-        {% else %}
-          <article class="client-card">
-            <h3>Nenhum client cadastrado</h3>
-            <p class="lead">Crie o primeiro client para iniciar um fluxo OIDC.</p>
-          </article>
-        {% endfor %}
-      </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
     </section>
-  </section>
+  </main>
 {% endblock %}
