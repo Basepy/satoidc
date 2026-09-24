@@ -5,14 +5,17 @@ from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 PUBLIC_PREFIXES = (
-    "/_nicegui",  # assets internos
+    "/static",  # assets da UI Jinja
     "/oauth",  # tudo de OIDC
     "/api",  # APIs públicas (token, callbacks, etc.)
 )
 
 PUBLIC_EXACT = {
     "/register",
+    "/register/nostr",
+    "/register/nostr/generate",
     "/login",
+    "/login/nostr",
     "/logout",
     "/health",
 }

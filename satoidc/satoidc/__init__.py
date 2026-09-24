@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from nicegui import ui
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from satoidc.auth.middleware import AuthMiddleware
@@ -11,8 +11,14 @@ from satoidc.routes.login import router as login_page
 from satoidc.routes.oauth2 import router
 from satoidc.routes.register import router as register_page
 from satoidc.settings import ENV
+from satoidc.web import PACKAGE_DIR
 
 app = FastAPI(title="Identity Service", version="0.1.0")
+app.mount(
+    "/static",
+    StaticFiles(directory=str(PACKAGE_DIR / "static")),
+    name="static",
+)
 app.add_middleware(AuthMiddleware)
 app.add_middleware(
     SessionMiddleware,
@@ -47,6 +53,3 @@ app.include_router(router=create_client_page, tags=["create client"])
 app.include_router(router=login_page, tags=["login"])
 app.include_router(router=register_page, tags=["register"])
 app.include_router(router=authorize_page, tags=["authorize"])
-
-
-ui.run_with(app)

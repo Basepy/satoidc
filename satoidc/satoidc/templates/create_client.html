@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Novo client | SatOIDC{% endblock %}
+
+{% block content %}
+  <section class="container center-layout">
+    <div class="card panel-card consent-card">
+      <span class="eyebrow">OAuth2</span>
+      <h1>Criar client</h1>
+      <p class="lead">Cadastre uma aplicacao para usar os fluxos OpenID Connect do SatOIDC.</p>
+
+      {% if created %}
+        <p class="message success">Client criado com sucesso.</p>
+      {% endif %}
+
+      <form class="stack" method="post" action="/create_client">
+        <label class="field">
+          <span>Nome do client</span>
+          <input class="input" name="client_name" required />
+        </label>
+
+        <label class="field">
+          <span>URI do client</span>
+          <input class="input" name="client_uri" type="url" placeholder="https://app.exemplo.com" required />
+        </label>
+
+        <label class="field">
+          <span>Escopos permitidos</span>
+          <input class="input" name="scope" value="openid profile email" required />
+        </label>
+
+        <label class="field">
+          <span>Redirect URIs</span>
+          <textarea class="textarea" name="redirect_uri" placeholder="https://app.exemplo.com/callback" required></textarea>
+        </label>
+
+        <label class="field">
+          <span>Grant types</span>
+          <textarea class="textarea" name="grant_type" required>authorization_code
+refresh_token</textarea>
+        </label>
+
+        <label class="field">
+          <span>Response types</span>
+          <textarea class="textarea" name="response_type" required>code</textarea>
+        </label>
+
+        <label class="field">
+          <span>Token endpoint auth method</span>
+          <select class="select" name="token_endpoint_auth_method">
+            <option value="client_secret_basic">client_secret_basic</option>
+            <option value="client_secret_post">client_secret_post</option>
+            <option value="none">none</option>
+          </select>
+        </label>
+
+        <div class="actions">
+          <button class="button" type="submit">Criar client</button>
+          <a class="button outline" href="/">Voltar</a>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

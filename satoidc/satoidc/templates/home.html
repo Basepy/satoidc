@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}SatOIDC | Clients{% endblock %}
+
+{% block content %}
+  <section class="container center-layout">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">OpenID Connect Provider</span>
+        <h1>Identidade soberana para apps Bitcoin.</h1>
+        <p class="lead">
+          Gerencie clients OAuth2/OIDC e autentique usuarios com senha, Lightning e Nostr em um fluxo simples e verificavel.
+        </p>
+        <div class="actions">
+          <a class="button" href="/create_client">Criar client</a>
+          <a class="button secondary" href="/oauth/.well-known/openid-configuration">Discovery OIDC</a>
+        </div>
+      </div>
+      <div class="visual-hill" aria-hidden="true"></div>
+    </div>
+
+    <section class="card panel-card dashboard-grid" style="margin-top: 46px;">
+      <div>
+        <span class="eyebrow">Sessao</span>
+        <h2>Clients OAuth2</h2>
+        <p class="lead">Logado como <strong>{{ user_id }}</strong>.</p>
+      </div>
+
+      <div class="client-list">
+        {% for client in clients %}
+          <article class="client-card">
+            <h3>{{ client.client_metadata.get('client_name') or client.client_id }}</h3>
+            <div class="meta-grid">
+              <div class="meta-item">
+                <strong>Client ID</strong>
+                <span>{{ client.client_id }}</span>
+              </div>
+              <div class="meta-item">
+                <strong>URI</strong>
+                <span>{{ client.client_metadata.get('client_uri') or '-' }}</span>
+              </div>
+              <div class="meta-item">
+                <strong>Scope</strong>
+                <span>{{ client.client_metadata.get('scope') or '-' }}</span>
+              </div>
+              <div class="meta-item">
+                <strong>Auth method</strong>
+                <span>{{ client.client_metadata.get('token_endpoint_auth_method') or '-' }}</span>
+              </div>
+            </div>
+          </article>
+        {% else %}
+          <article class="client-card">
+            <h3>Nenhum client cadastrado</h3>
+            <p class="lead">Crie o primeiro client para iniciar um fluxo OIDC.</p>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  </section>
+{% endblock %}

@@ -1,49 +1,36 @@
 from secrets import token_urlsafe
 
 from authlib.oauth2 import OAuth2Error
-from fastapi import Request
-from nicegui import APIRouter, ui
+from fastapi import APIRouter, Request
 
 from satoidc.auth.oauth2 import authorization
+from satoidc.web import templates
 
 router = APIRouter()
 
 
-@router.page("/authorize")
+@router.get("/authorize")
 async def authorize_get(request: Request):
-    # valida request de consentimento
+    error_body = None
+    grant = None
     try:
-        _grant = authorization.validate_consent_request(request=request)
+        grant = authorization.validate_consent_request(request=request)
     except OAuth2Error as error:
-        ui.notify(str(dict(error.get_body())))
+        error_body = dict(error.get_body())
 
-    # CSRF
     csrf = token_urlsafe(32)
     request.session["csrf_token"] = csrf
-
-    ui.label("Authorize Application").classes("text-2xl font-bold")
     action = "/oauth/authorize" + (
         ("?" + request.url.query) if request.url.query else ""
     )
-    # 🔐 FORM: sem depender de query na action
-    with (
-        ui.element("form")
-        .props(f"method='post' action='{action}'")
-        .classes("mt-4")
-    ):
-        # CSRF + decision
-        ui.element("input").props(
-            f"type='hidden' name='csrf_token' value='{csrf}'"
-        )
-
-        # ✅ Reenvia TODOS os parâmetros OAuth como hidden (inclui client_id)
-        for k, v in request.query_params.items():
-            ui.element("input").props(f"type='hidden' name='{k}' value='{v}'")
-
-        with ui.row().classes("gap-3"):
-            ui.button("Approve").props(
-                'type="submit" name="decision" value="approve"'
-            )
-            ui.button("Deny").props(
-                'type="submit" name="decision" value="deny" outline'
-            )
+    return templates.TemplateResponse(
+        "authorize.html",
+        {
+            "request": request,
+            "action": action,
+            "csrf": csrf,
+            "query_params": list(request.query_params.items()),
+            "grant": grant,
+            "error_body": error_body,
+        },
+    )

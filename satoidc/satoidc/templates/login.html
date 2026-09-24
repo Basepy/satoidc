@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Entrar | SatOIDC{% endblock %}
+
+{% block content %}
+  <section class="container auth-layout">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Acesso seguro</span>
+        <h1>Entre com sua identidade Bitcoin.</h1>
+        <p class="lead">
+          Use login tradicional ou Nostr para continuar o fluxo OpenID Connect.
+        </p>
+        <div class="visual-hill" aria-hidden="true"></div>
+      </div>
+
+      <section class="card form-card">
+        <span class="eyebrow">SatOIDC</span>
+        <h2>Entrar</h2>
+
+        {% if err == 'invalid' %}
+          <p class="message error">Credenciais invalidas.</p>
+        {% elif err == 'bad_flow' %}
+          <p class="message error">Fluxo de login invalido. Tente novamente.</p>
+        {% elif err == 'nostr_not_found' %}
+          <p class="message error">Nenhuma conta encontrada para esta chave Nostr.</p>
+        {% elif err == 'nostr_invalid' %}
+          <p class="message error">Chave Nostr invalida.</p>
+        {% elif err %}
+          <p class="message error">Nao foi possivel entrar.</p>
+        {% endif %}
+
+        <form class="stack" method="post" action="/login">
+          <input type="hidden" name="redirect_to" value="{{ redirect_to }}" />
+          <input type="hidden" name="login_nonce" value="{{ login_nonce }}" />
+
+          <label class="field">
+            <span>Email ou login</span>
+            <input class="input" name="identifier" autocomplete="username" required />
+          </label>
+
+          <label class="field">
+            <span>Senha</span>
+            <input class="input" name="password" type="password" autocomplete="current-password" required />
+          </label>
+
+          <button class="button block" type="submit">Entrar</button>
+        </form>
+
+        <div class="section-divider"></div>
+
+        <form class="stack" method="post" action="/login/nostr">
+          <input type="hidden" name="redirect_to" value="{{ redirect_to }}" />
+          <label class="field">
+            <span>Entrar com Nostr</span>
+            <input class="input" name="nostr_private_key" type="password" autocomplete="off" placeholder="nsec ou chave privada hex" required />
+          </label>
+          <p class="message">A chave privada nao e armazenada. Usamos ela apenas para identificar a chave publica vinculada.</p>
+          <button class="button secondary block" type="submit">Entrar com Nostr</button>
+        </form>
+
+        <div class="actions" style="margin-top: 22px;">
+          <a href="/register?redirect_to={{ redirect_to_encoded }}">Criar conta</a>
+          <a href="/">Voltar</a>
+        </div>
+      </section>
+    </div>
+  </section>
+{% endblock %}
