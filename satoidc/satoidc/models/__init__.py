@@ -44,9 +44,6 @@ class User(TimestampMixin):
     password_hash: Mapped[Optional[str]] = mapped_column(nullable=True)
     nickname: Mapped[str] = mapped_column(default="Satoshi")
     is_active: Mapped[bool] = mapped_column(default=True)
-    nostr_pubkey: Mapped[Optional[str]] = mapped_column(
-        unique=True, nullable=True, index=True, default=None
-    )
 
     # Relationships
     permissions: Mapped[list["Permission"]] = relationship(
@@ -112,7 +109,7 @@ class Permission:
 class LnurlAuthChallenge(TimestampMixin):
     __tablename__ = "lnurl_auth_challenges"
     user_id: Mapped[Optional[UUID]] = mapped_column(
-        ForeignKey("users.id"), nullable=True, index=True
+        ForeignKey("users.id"), nullable=True, index=True, default=None
     )
 
     k1: Mapped[str] = mapped_column(
@@ -120,6 +117,7 @@ class LnurlAuthChallenge(TimestampMixin):
     )
     action: Mapped[str] = mapped_column(default="login")
     verified: Mapped[bool] = mapped_column(default=False, index=True)
+    used: Mapped[bool] = mapped_column(default=False, index=True)
 
     user: Mapped[Optional["User"]] = relationship("User", init=False)
 
@@ -164,3 +162,47 @@ class OAuth2Token(OAuth2TokenMixin):
             return False
         expires_at = self.issued_at + self.expires_in * 2
         return expires_at >= time.time()
+
+
+@table_registry.mapped_as_dataclass
+class DevAccessRequest(TimestampMixin):
+    """Pedido de acesso de desenvolvedor, analisado por um administrador."""
+
+    __tablename__ = "dev_access_requests"
+
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    id: Mapped[UUID] = mapped_column(
+        init=False, primary_key=True, default_factory=uuid4
+    )
+    reason: Mapped[str] = mapped_column(default="")
+    status: Mapped[str] = mapped_column(default="pending", index=True)
+    decision_reason: Mapped[Optional[str]] = mapped_column(default=None)
+    decided_by: Mapped[Optional[UUID]] = mapped_column(
+        ForeignKey("users.id"), nullable=True, default=None
+    )
+    decided_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
+
+    user: Mapped["User"] = relationship(
+        "User", foreign_keys=[user_id], init=False
+    )
+
+
+@table_registry.mapped_as_dataclass
+class AuthorizedApp(TimestampMixin):
+    """App (client OAuth2) ao qual o usuário deu consentimento."""
+
+    __tablename__ = "authorized_apps"
+    __table_args__ = (
+        UniqueConstraint("user_id", "client_id", name="uq_authorized_app"),
+    )
+
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    client_id: Mapped[str] = mapped_column(index=True)
+    id: Mapped[int] = mapped_column(init=False, primary_key=True)
+    scope: Mapped[str] = mapped_column(default="")

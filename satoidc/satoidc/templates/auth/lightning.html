@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Entrar com Lightning | SatOIDC{% endblock %}
+{% block content %}
+<div style="width: 100%; min-height: 100vh; box-sizing: border-box; background: var(--c-f0f2f8); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px" class="dc-root">
+<form method="post" action="#" style="width: min(1040px, calc(100% - 32px)); min-height: 460px; box-sizing: border-box; background: var(--c-ffffff); border-radius: 28px; padding: 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; margin: 0" class="dc-card" onsubmit="return false" data-lightning="" data-action="{{ action }}" data-redirect="{{ redirect_to }}">
+<div style="display: flex; flex-direction: column; gap: 16px" class="dc-left">
+<img src="{{ url_for('static', path='/img/satoidc-logo.png') }}" alt="SatOIDC" style="width: 48px; height: 48px; display: block" class="dc-logo"><h1 style="margin: 16px 0 0; font-size: 36px; line-height: 44px; font-weight: 400; letter-spacing: -0.2px" class="dc-h1">{{ 'Criar conta com Lightning' if action == 'register' else 'Entrar com Lightning' }}</h1><ol style="list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px"><li style="display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 20px"><span style="flex-shrink: 0; display: flex; width: 24px; height: 24px; border-radius: 12px; background: var(--c-e4e7fb); color: var(--c-4453c9); font-size: 12px; font-weight: 700; align-items: center; justify-content: center">1</span><span>Abra uma carteira compatível com LNURL-auth.</span></li><li style="display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 20px"><span style="flex-shrink: 0; display: flex; width: 24px; height: 24px; border-radius: 12px; background: var(--c-e4e7fb); color: var(--c-4453c9); font-size: 12px; font-weight: 700; align-items: center; justify-content: center">2</span><span>Escaneie o código ou toque em “Abrir na carteira”.</span></li><li style="display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 20px"><span style="flex-shrink: 0; display: flex; width: 24px; height: 24px; border-radius: 12px; background: var(--c-e4e7fb); color: var(--c-4453c9); font-size: 12px; font-weight: 700; align-items: center; justify-content: center">3</span><span>Confirme o {{ 'cadastro' if action == 'register' else 'login' }}. Sua carteira assina um desafio único — nenhuma senha é enviada.</span></li></ol>
+</div>
+<div style="display: flex; flex-direction: column; gap: 24px; padding-top: 24px" class="dc-right">
+<div style="display: flex; gap: 24px; align-items: center">
+<div style="flex-shrink: 0; width: 216px; height: 216px; box-sizing: border-box; padding: 8px; border: 1px solid var(--c-d5d7e0); border-radius: 16px; position: relative; background: #FFFFFD" data-qr="">
+
+<div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 48px; height: 48px; border-radius: 12px; background: #FFFFFD; display: flex; align-items: center; justify-content: center"><img src="{{ url_for('static', path='/img/satoidc-logo.png') }}" alt="SatOIDC" style="width: 38px; height: 38px; display: block"></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600" data-status="" role="status" aria-live="polite"><span style="width: 16px; height: 16px; border-radius: 8px; border: 2px solid var(--c-e4e7fb); border-top-color: var(--c-4453c9); animation: spin 0.9s linear infinite" data-spinner=""></span><span data-status-text="">Gerando código…</span></div>
+<div style="font-size: 13px; line-height: 18px; color: var(--c-4a4d5a)" data-expiry="">O código expira em <strong style="color: var(--c-1b1c22)" data-timer="">4:59</strong> e só pode ser usado uma vez.</div>
+<div style="display: flex; align-items: center; gap: 4px; height: 40px; padding-left: 12px; background: var(--c-f0f2f8); border-radius: 8px">
+<code style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--c-1b1c22); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1" data-code="">…</code>
+<button type="button" aria-label="Copiar LNURL" style="display: flex; width: 40px; height: 40px; border: 0; background: transparent; color: var(--c-4453c9); align-items: center; justify-content: center; border-radius: 8px; flex-shrink: 0" data-copy-lnurl=""><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h8"></path></svg></button>
+</div>
+<button type="button" data-retry="" hidden="" style="align-self: flex-start; display: inline-flex; align-items: center; height: 40px; padding: 0 16px; border-radius: 20px; color: var(--c-4453c9); font-family: inherit; font-size: 14px; font-weight: 600; background: transparent; border: 1px solid var(--c-747785); cursor: pointer">Gerar novo código</button></div>
+</div>
+<div style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--c-e4e7fb); font-size: 13px; line-height: 18px; color: var(--c-1b1c22)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="stroke: var(--c-4453c9)"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3z"></path><path d="m9 12 2 2 4-4"></path></svg><span>Confira o domínio exibido na carteira: ele deve ser <strong>{{ domain }}</strong>.</span></div>
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: auto; padding-top: 16px" class="dc-actions">
+<a href="{{ '/register' if action == 'register' else '/login' }}?redirect_to={{ redirect_to_encoded }}" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; color: var(--c-4453c9); font-size: 14px; font-weight: 600; text-decoration: none; background: transparent; border: 0">Usar senha</a><a href="#" style="display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 24px; border-radius: 22px; background: var(--c-4453c9); color: var(--c-fffffe); font-size: 14px; font-weight: 600; text-decoration: none; border: 0; box-sizing: border-box" data-open="" aria-disabled="true"><span style="display: flex; align-items: center; gap: 8px">Abrir na carteira<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg></span></a>
+</div>
+</div>
+</form>
+<footer style="width: min(1040px, calc(100% - 32px)); display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--c-4a4d5a)" class="dc-foot">
+<button type="button" style="display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border: 0; background: transparent; color: var(--c-4a4d5a); font-family: inherit; font-size: 13px; border-radius: 6px">Português (Brasil)<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+<nav style="display: flex; gap: 8px">
+<a href="#" style="color: var(--c-4a4d5a); text-decoration: none; padding: 8px 10px">Ajuda</a>
+<a href="#" style="color: var(--c-4a4d5a); text-decoration: none; padding: 8px 10px">Privacidade</a>
+<a href="#" style="color: var(--c-4a4d5a); text-decoration: none; padding: 8px 10px">Termos</a>
+</nav>
+</footer>
+</div>
+{% endblock %}

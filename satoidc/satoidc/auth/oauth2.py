@@ -67,7 +67,6 @@ def generate_user_info(user, scope):
     if "profile" in scope:
         user_info["name"] = user.nickname
         user_info["lnurl_pubkey"] = user.lnurl_pubkey
-        user_info["nostr_pubkey"] = user.nostr_pubkey
     return user_info
 
 
@@ -256,7 +255,15 @@ require_oauth = ResourceProtector()
 
 def config_oauth(app):
     """Setup the application configuration"""
-    query_client = create_query_client_func(db, OAuth2Client)
+    base_query_client = create_query_client_func(db, OAuth2Client)
+
+    def query_client(client_id):
+        """Clientes desativados no painel não conseguem mais autenticar."""
+        client = base_query_client(client_id)
+        if client and client.client_metadata.get("disabled"):
+            return None
+        return client
+
     save_token = create_save_token_func(db, OAuth2Token)
     authorization.init_app(
         app, query_client=query_client, save_token=save_token

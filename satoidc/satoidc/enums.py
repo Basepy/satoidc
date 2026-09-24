@@ -5,6 +5,7 @@ class PermissionsEnum(StrEnum):
     ROOT = auto()
     ADMIN = auto()
     SUPPORT = auto()
+    DEVELOPER = auto()
 
 
 class PKCEMethodEnum(StrEnum):

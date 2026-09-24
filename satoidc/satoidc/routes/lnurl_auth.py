@@ -1,128 +1,165 @@
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
-from typing import Annotated
+from typing import Annotated, Literal, Optional
 
-from fastapi import APIRouter, Depends, Request
-from sqlalchemy import select, text, update
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from satoidc.auth.lnurl import url_encode, verify
-from satoidc.auth.lnurl_schemas import LnurlAction, LnurlAuthCallbackIn
+from satoidc.auth.lnurl_schemas import LnurlAuthCallbackIn
+from satoidc.auth.session import current_user
 from satoidc.models import LnurlAuthChallenge, User
 from satoidc.models.database import get_session
 from satoidc.settings import ENV
+from satoidc.utils import safe_redirect
 
-router = APIRouter(prefix="/auth", tags=["LNURL Auth"])
+router = APIRouter(prefix="/auth/lnurl", tags=["LNURL Auth"])
 
 Session = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.post(
-    "/lnurl",
-    status_code=HTTPStatus.CREATED,
-)
-async def get_lnurl(
-    request: Request, session: Session, action: LnurlAction = "login"
+class ChallengeIn(BaseModel):
+    action: Literal["login", "register", "link"] = "login"
+    redirect_to: Optional[str] = "/"
+
+
+def is_expired(challenge: LnurlAuthChallenge) -> bool:
+    created_at = challenge.created_at
+    if created_at.tzinfo is None:  # SQLite devolve datas sem timezone (UTC)
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    ttl = timedelta(seconds=ENV.LNURL_K1_TTL_SECONDS)
+    return datetime.now(timezone.utc) - created_at > ttl
+
+
+@router.post("", status_code=HTTPStatus.CREATED)
+async def create_challenge(
+    request: Request, session: Session, body: ChallengeIn = ChallengeIn()
 ):
-    # Cria um desafio no banco para validar depois
-    challenge = LnurlAuthChallenge(action=action)
+    """Cria o desafio (k1) que a carteira Lightning vai assinar."""
+    owner = None
+    if body.action == "link":
+        # vincular carteira exige estar logado: o desafio nasce preso à conta
+        owner = await current_user(session, request)
+        if not owner:
+            return JSONResponse(
+                {"status": "ERROR", "reason": "login_required"},
+                status_code=HTTPStatus.UNAUTHORIZED,
+            )
+    challenge = LnurlAuthChallenge(
+        action=body.action, user_id=owner.id if owner else None
+    )
     session.add(challenge)
     await session.commit()
     await session.refresh(challenge)
+
+    # Amarra o desafio ao navegador que o pediu: só ele consegue concluir.
+    request.session["lnurl_k1"] = challenge.k1
+    request.session["lnurl_next"] = safe_redirect(body.redirect_to)
+
+    base_url = str(request.base_url).rstrip("/")
+    callback = f"{base_url}/auth/lnurl/callback?tag=login&k1={challenge.k1}"
+    lnurl = url_encode(callback)
     return {
         "k1": challenge.k1,
-        "expire": challenge.created_at
-        + text(
-            f"interval '{ENV.LNURL_K1_TTL_SECONDS} seconds'",
-        ),
-        "lnurl_auth": url_encode(
-            f"{request.base_url}/auth/lnurl/callback?tag=login&k1={challenge.k1}&action={action}"
-        ),
+        "action": challenge.action,
+        "lnurl": lnurl,
+        "uri": f"lightning:{lnurl}",
+        "callback": callback,
+        "expires_in": ENV.LNURL_K1_TTL_SECONDS,
     }
 
 
-@router.get("/lnurl/callback", status_code=HTTPStatus.OK)
-async def lnurl_auth_callback(query: LnurlAuthCallbackIn, session: Session):
-    response = {"status": "ERROR", "reason": "Unknown error"}
-    # 1) k1 precisa ser esperado (emitido por nós), não reutilizado,
-    #  não expirado, e action precisa bater com o que foi emitido
-    action: LnurlAction = getattr(query, "action", None) or "login"
-    cutoff = datetime.now(timezone.utc) - timedelta(
-        seconds=ENV.LNURL_K1_TTL_SECONDS
-    )
-    challenge = await session.scalar(
-        update(LnurlAuthChallenge)
-        .where(
-            LnurlAuthChallenge.k1 == query.k1,
-            LnurlAuthChallenge.used.is_(False),
-            LnurlAuthChallenge.verified.is_(False),
-            LnurlAuthChallenge.created_at >= cutoff,
-        )
-        .values(verified=True)
-        .returning(LnurlAuthChallenge)
-    )
-    if not challenge:
+@router.get("/callback", status_code=HTTPStatus.OK)
+async def lnurl_auth_callback(
+    session: Session, query: Annotated[LnurlAuthCallbackIn, Query()]
+):
+    """Chamado pela carteira (LUD-04) com k1, sig e key."""
+    challenge = await session.get(LnurlAuthChallenge, query.k1)
+    if (
+        not challenge
+        or challenge.used
+        or challenge.verified
+        or is_expired(challenge)
+    ):
         return {"status": "ERROR", "reason": "Invalid or expired k1"}
-    if challenge.action != action:
-        return {"status": "ERROR", "reason": "Action mismatch"}
 
-    # 2) verifica assinatura (k1 assinado pela linkingPrivKey do wallet)
     if not verify(query.k1, query.key, query.sig):
-        return {"status": "ERROR", "reason": "Bad Signature Error"}
+        return {"status": "ERROR", "reason": "Bad signature"}
 
-    # 3) resolve/gera usuário por linkingKey (pubkey derivada por domínio)
-    db_user = await session.scalar(
-        select(User).where(User.publickey == query.key)
+    user = await session.scalar(
+        select(User).where(User.lnurl_pubkey == query.key)
     )
-    match action:
-        case "register":
-            if not db_user:
-                with session.begin():
-                    db_user = User(
-                        password=None,
-                        email=None,
-                        affiliate_of=None,
-                        nickname=None,
-                        publickey=query.key,
-                        login=None,
-                    )
-                    session.add(db_user)
-                    await session.flush()
-                    challenge.user_id = db_user.id
-                    session.add(challenge)
-                    await session.commit()
-            response = {"status": "OK"}
 
-        case "login":
-            if not db_user:
-                return {
-                    "status": "ERROR",
-                    "reason": "User not found for this linkingKey",
-                }
-            challenge.verified = True
-            challenge.user_id = db_user.id
-            session.add(challenge)
-            await session.commit()
-            response = {"status": "OK"}
-        case "link":
-            # “link” = vincular esse linkingKey a uma conta já logada
-            user = await session.scalar(
-                select(User).where(User.id == challenge.user_id)
-            )
-            user.lnurl_pubkey = query.key
-            challenge.verified = True
-            challenge.used = True
-            session.add_all([user, challenge])
-            await session.commit()
-            response = {"status": "OK"}
-        case "auth":
-            # “auth” = autorizar uma ação stateless (sem login).
-            # aqui você normalmente valida também "o que está sendo autorizado"
+    if challenge.action == "link":
+        if not challenge.user_id or (user and user.id != challenge.user_id):
+            return {
+                "status": "ERROR",
+                "reason": "Esta carteira já está vinculada a outra conta",
+            }
+        owner = await session.get(User, challenge.user_id)
+        owner.lnurl_pubkey = query.key
+        session.add(owner)
+        user = owner
+    elif challenge.action == "register":
+        if user:
+            return {
+                "status": "ERROR",
+                "reason": "Esta carteira já está vinculada a uma conta",
+            }
+        user = User(
+            lnurl_pubkey=query.key,
+            email=None,
+            login=None,
+            password_hash=None,
+        )
+        session.add(user)
+        await session.flush()
+    elif not user:
+        return {
+            "status": "ERROR",
+            "reason": "Nenhuma conta vinculada a esta carteira. Crie uma conta primeiro.",
+        }
 
-            challenge.verified = True
-            session.add(challenge)
-            await session.commit()
-            response = {"status": "OK"}
-        case _:
-            response = {"status": "ERROR", "reason": "Unknown action"}
-    return response
+    challenge.verified = True
+    challenge.user_id = user.id
+    session.add(challenge)
+    await session.commit()
+    return {"status": "OK"}
+
+
+@router.get("/status/{k1}")
+async def challenge_status(k1: str, request: Request, session: Session):
+    """O navegador consulta até a carteira concluir; aí abre a sessão."""
+    if request.session.get("lnurl_k1") != k1:
+        return {"status": "ERROR", "reason": "Unknown challenge"}
+
+    challenge = await session.get(LnurlAuthChallenge, k1)
+    if not challenge or challenge.used:
+        return {"status": "ERROR", "reason": "Unknown challenge"}
+    if not challenge.verified or not challenge.user_id:
+        if is_expired(challenge):
+            return {"status": "EXPIRED"}
+        return {"status": "PENDING"}
+
+    if challenge.action == "link":
+        # só o dono da sessão que pediu o desafio conclui a vinculação
+        if request.session.get("user_id") != challenge.user_id.hex:
+            return {"status": "ERROR", "reason": "Unknown challenge"}
+        challenge.used = True
+        session.add(challenge)
+        await session.commit()
+        request.session.pop("lnurl_k1", None)
+        request.session.pop("lnurl_next", None)
+        return {"status": "OK", "redirect": "/account"}
+
+    challenge.used = True
+    session.add(challenge)
+    await session.commit()
+
+    request.session["user_id"] = challenge.user_id.hex
+    request.session.pop("lnurl_k1", None)
+    redirect = request.session.pop("lnurl_next", "/")
+    return {"status": "OK", "redirect": redirect}

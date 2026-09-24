@@ -22,9 +22,7 @@ class ResourceProtector(_ResourceProtector):
         :param scope: string or list of scope values
         :return: token object
         """
-        http_request = FastAPIOAuth2Request(
-            request.method, request.url, {}, request.headers
-        )
+        http_request = FastAPIOAuth2Request(request)
         token = self.validate_request(scope, http_request)
         request.state.token = token
         return token

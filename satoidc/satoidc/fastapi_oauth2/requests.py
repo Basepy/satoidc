@@ -122,7 +122,9 @@ class FastAPIOAuth2Request(OAuth2Request):
         super().__init__(
             method=request.method,
             uri=str(request.url),
-            headers=dict(request.headers),
+            # Headers do Starlette ignora maiúsculas/minúsculas; o authlib procura
+            # "Authorization" (client_secret_basic) com essa grafia exata.
+            headers=request.headers,
         )
         self._request = request
         self.payload = FastAPIOAuth2Payload(request)
@@ -162,6 +164,6 @@ class FastAPIJsonRequest(JsonRequest):
 
     def __init__(self, request: Request):
         super().__init__(
-            request.method, str(request.url), dict(request.headers)
+            request.method, str(request.url), request.headers
         )
         self.payload = FastAPIJsonPayload(request)

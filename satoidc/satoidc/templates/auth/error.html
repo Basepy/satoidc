@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | SatOIDC{% endblock %}
+{% block content %}
+<div style="width: 100%; min-height: 100vh; box-sizing: border-box; background: var(--c-f0f2f8); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px" class="dc-root">
+<form style="width: min(1040px, calc(100% - 32px)); min-height: 420px; box-sizing: border-box; background: var(--c-ffffff); border-radius: 28px; padding: 40px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; margin: 0" class="dc-card">
+<div style="display: flex; flex-direction: column; gap: 16px" class="dc-left">
+<img src="{{ url_for('static', path='/img/satoidc-logo.png') }}" alt="SatOIDC" style="width: 48px; height: 48px; display: block" class="dc-logo"><h1 style="margin: 16px 0 0; font-size: 36px; line-height: 44px; font-weight: 400; letter-spacing: -0.2px" class="dc-h1">{{ title }}</h1><p style="margin: 0; font-size: 16px; line-height: 24px; color: var(--c-1b1c22)">{{ message }}</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 24px; padding-top: 64px" class="dc-right"><p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--c-4a4d5a)">{% if code %}Código: <code style="font-family: 'JetBrains Mono', monospace">{{ code }}</code>{% endif %}</p><div style="display: flex; justify-content: flex-end; margin-top: auto; padding-top: 16px"><a href="/" style="display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 24px; border-radius: 22px; background: var(--c-4453c9); color: var(--c-fffffe); font-size: 14px; font-weight: 600; text-decoration: none">Ir para minha conta</a></div></div>
+</form>
+<footer style="width: min(1040px, calc(100% - 32px)); display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--c-4a4d5a)" class="dc-foot">
+<button type="button" style="display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border: 0; background: transparent; color: var(--c-4a4d5a); font-family: inherit; font-size: 13px; border-radius: 6px">Português (Brasil)<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></button>
+<nav style="display: flex; gap: 8px">
+<a href="#" style="color: var(--c-4a4d5a); text-decoration: none; padding: 8px 10px">Ajuda</a>
+<a href="#" style="color: var(--c-4a4d5a); text-decoration: none; padding: 8px 10px">Privacidade</a>
+<a href="#" style="color: var(--c-4a4d5a); text-decoration: none; padding: 8px 10px">Termos</a>
+</nav>
+</footer>
+</div>
+{% endblock %}

@@ -4,9 +4,11 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from satoidc.auth.middleware import AuthMiddleware
 from satoidc.auth.oauth2 import config_oauth
+from satoidc.routes.account import router as account_page
+from satoidc.routes.admin import router as admin_page
 from satoidc.routes.authorize import router as authorize_page
-from satoidc.routes.create_client import router as create_client_page
-from satoidc.routes.home import router as home_page
+from satoidc.routes.developer import router as developer_page
+from satoidc.routes.lnurl_auth import router as lnurl_auth_router
 from satoidc.routes.login import router as login_page
 from satoidc.routes.oauth2 import router
 from satoidc.routes.register import router as register_page
@@ -48,8 +50,10 @@ app.config = {
 config_oauth(app)
 
 app.include_router(router)
-app.include_router(router=home_page, tags=["home"])
-app.include_router(router=create_client_page, tags=["create client"])
+app.include_router(router=account_page, tags=["account"])
+app.include_router(router=developer_page)
+app.include_router(router=admin_page)
 app.include_router(router=login_page, tags=["login"])
+app.include_router(router=lnurl_auth_router)
 app.include_router(router=register_page, tags=["register"])
 app.include_router(router=authorize_page, tags=["authorize"])

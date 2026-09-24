@@ -6,7 +6,7 @@ from authlib.oauth2 import OAuth2Error
 from authlib.oauth2.rfc6749.errors import UnsupportedResponseTypeError
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from satoidc.auth.oauth2 import (
@@ -15,7 +15,7 @@ from satoidc.auth.oauth2 import (
     generate_user_info,
     require_oauth,
 )
-from satoidc.models import User
+from satoidc.models import AuthorizedApp, User
 from satoidc.models.database import get_session
 from satoidc.settings import ENV
 
@@ -68,6 +68,28 @@ async def authorize(  # noqa: PLR0911
             grant_user=None,
         )
 
+    # registra o consentimento para aparecer em "Apps conectados"
+    payload = getattr(grant.request, "payload", grant.request)
+    scope = getattr(payload, "scope", "") or ""
+    known = await session.scalar(
+        select(AuthorizedApp).where(
+            AuthorizedApp.user_id == user.id,
+            AuthorizedApp.client_id == grant.client.client_id,
+        )
+    )
+    if known:
+        known.scope = scope
+        known.updated_at = func.now()
+    else:
+        session.add(
+            AuthorizedApp(
+                user_id=user.id,
+                client_id=grant.client.client_id,
+                scope=scope,
+            )
+        )
+    await session.commit()
+
     return authorization.create_authorization_response(
         request=request,
         grant_user=user,
@@ -107,7 +129,7 @@ def revoke_token(
 @router.get("/userinfo")
 def userinfo(request: Request):
     """Request user profile information"""
-    with require_oauth.acquire(request, "profile") as token:
+    with require_oauth.acquire(request, ["openid"]) as token:
         return generate_user_info(token.user, token.scope)
 
 

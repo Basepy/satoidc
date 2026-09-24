@@ -1,0 +1,15 @@
+<div style="position: fixed; inset: 0; z-index: 50; overflow-y: auto; padding: 24px; box-sizing: border-box; background: rgba(8, 10, 16, 0.55); display: flex; align-items: center; justify-content: center" class="dc-overlay">
+<form role="dialog" aria-modal="true" aria-labelledby="dlg-title" style="width: 560px; box-sizing: border-box; background: var(--c-ffffff); border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28); margin: auto;" method="post" action="/account/wallet/link" novalidate="" onsubmit="return false" data-lightning="" data-action="link" data-redirect="/account">
+<h2 id="dlg-title" style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 400; text-align: left">Vincular outra carteira</h2>
+<div style="display: flex; gap: 20px; align-items: center">
+<div style="flex-shrink: 0; width: 176px; height: 176px; box-sizing: border-box; padding: 8px; border: 1px solid var(--c-d5d7e0); border-radius: 16px; background: #FFFFFD" data-qr="" data-qr-size="160">
+
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px; line-height: 20px">
+<span>Escaneie com a nova carteira e confirme. A carteira atual será substituída.</span>
+<span style="display: flex; align-items: center; gap: 8px; font-weight: 600" data-status="" role="status" aria-live="polite"><span style="width: 14px; height: 14px; border-radius: 7px; border: 2px solid var(--c-e4e7fb); border-top-color: var(--c-4453c9); animation: spin 0.9s linear infinite" data-spinner=""></span><span data-status-text="">Gerando código…</span></span>
+<button type="button" data-retry="" hidden="" style="align-self: flex-start; height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--c-747785); background: transparent; color: var(--c-4453c9); font-family: inherit; font-size: 13px; font-weight: 600">Gerar novo código</button></div>
+</div>
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding-top: 8px"><button type="button" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; color: var(--c-4453c9); font-size: 14px; font-weight: 600; text-decoration: none; background: transparent; border: 0; font-family: inherit" data-copy-lnurl="">Copiar LNURL</button><a href="/account" style="display: inline-flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 22px; color: var(--c-4453c9); font-size: 14px; font-weight: 600; text-decoration: none; background: transparent; border: 0" data-cancel="">Cancelar</a></div>
+</form>
+</div>

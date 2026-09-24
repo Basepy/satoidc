@@ -4,15 +4,10 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from satoidc.auth.nostr import (
-    NostrKeyError,
-    generate_keys,
-    keys_from_private_key,
-)
 from satoidc.auth.security import hash_password
 from satoidc.models import User
 from satoidc.models.database import get_session
@@ -22,55 +17,46 @@ from satoidc.web import templates
 router = APIRouter()
 
 LOGIN_RE = re.compile(r"^[a-z0-9]{6,30}$")
-MIN_PASSWORD_LENTH = 8
-
+NICKNAME_RE = re.compile(r"^[\w.\-]{2,80}$", re.UNICODE)
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MIN_PASSWORD_LENGTH = 8
 
 Session = Annotated[AsyncSession, Depends(get_session)]
 
+MESSAGES = {
+    "login": "Use de 6 a 30 letras minúsculas e números.",
+    "login_taken": "Este login já está em uso.",
+    "email": "Informe um e-mail válido.",
+    "email_taken": "Este e-mail já está cadastrado.",
+    "nickname": "Letras, números, ponto, _ ou -, de 2 a 80 caracteres.",
+    "password": "A senha precisa ter 8 ou mais caracteres com maiúscula, minúscula, número e símbolo.",
+    "confirm": "As senhas não conferem.",
+    "terms": "Você precisa aceitar os Termos de Serviço.",
+}
 
-def register_error_url(err: str, redirect_to: str) -> str:
-    return f"/register?err={err}&redirect_to={quote(redirect_to, safe='')}"
 
-
-async def create_nostr_user(
-    session: Session,
-    request: Request,
-    keys,
-    nickname: Optional[str],
-    redirect_to: str,
-):
-    existing = await session.scalar(
-        select(User).where(User.nostr_pubkey == keys.public_key_hex)
+def strong_password(password: str) -> bool:
+    return (
+        len(password) >= MIN_PASSWORD_LENGTH
+        and any(c.islower() for c in password)
+        and any(c.isupper() for c in password)
+        and any(c.isdigit() for c in password)
+        and any(not c.isalnum() for c in password)
     )
-    if existing:
-        return RedirectResponse(
-            url=register_error_url("nostr_exists", redirect_to),
-            status_code=303,
-        )
 
-    user = User(
-        lnurl_pubkey=None,
-        email=None,
-        login=None,
-        nickname=(nickname or "").strip() or "Satoshi",
-        password_hash=None,
-        nostr_pubkey=keys.public_key_hex,
-    )
-    session.add(user)
-    await session.commit()
-    await session.refresh(user)
-    request.session["user_id"] = user.id.hex
 
+def render_form(request, redirect_to, values=None, errs=None, status=200):
     return templates.TemplateResponse(
         request,
-        "register.html",
+        "auth/register.html",
         {
             "request": request,
             "redirect_to": redirect_to,
             "redirect_to_encoded": quote(redirect_to, safe=""),
-            "err": None,
-            "generated_keys": keys,
+            "values": values or {},
+            "errs": {k: MESSAGES[v] for k, v in (errs or {}).items()},
         },
+        status_code=status,
     )
 
 
@@ -78,57 +64,68 @@ async def create_nostr_user(
 async def register_page(
     request: Request,
     redirect_to: Optional[str] = None,
-    err: Optional[str] = None,
 ):
-    redirect_to = safe_redirect(redirect_to)
-    return templates.TemplateResponse(
-        request,
-        "register.html",
-        {
-            "request": request,
-            "redirect_to": redirect_to,
-            "redirect_to_encoded": quote(redirect_to, safe=""),
-            "err": err,
-            "generated_keys": None,
-        },
-    )
+    return render_form(request, safe_redirect(redirect_to))
 
 
 @router.post("/register")
 async def register_post(
     session: Session,
     request: Request,
-    login: Annotated[str, Form()],
-    email: Annotated[str, Form()],
-    password: Annotated[str, Form()],
-    confirm: Annotated[str, Form()],
+    login: Annotated[str, Form()] = "",
+    email: Annotated[str, Form()] = "",
+    password: Annotated[str, Form()] = "",
+    confirm: Annotated[str, Form()] = "",
     nickname: Annotated[Optional[str], Form()] = None,
+    terms: Annotated[Optional[str], Form()] = None,
     redirect_to: Annotated[Optional[str], Form()] = "/",
 ):
     redirect_to = safe_redirect(redirect_to)
     login_value = login.strip()
     email_value = email.strip().lower()
+    nickname_value = (nickname or "").strip()
+    errs: dict[str, str] = {}
 
     if not LOGIN_RE.fullmatch(login_value):
-        return RedirectResponse(register_error_url("login", redirect_to), 303)
-    if not email_value or "@" not in email_value:
-        return RedirectResponse(register_error_url("email", redirect_to), 303)
-    if len(password) < MIN_PASSWORD_LENTH:
-        return RedirectResponse(register_error_url("password", redirect_to), 303)
-    if password != confirm:
-        return RedirectResponse(register_error_url("confirm", redirect_to), 303)
+        errs["login"] = "login"
+    if not EMAIL_RE.fullmatch(email_value):
+        errs["email"] = "email"
+    if nickname_value and not NICKNAME_RE.fullmatch(nickname_value):
+        errs["nickname"] = "nickname"
+    if not strong_password(password):
+        errs["password"] = "password"
+    elif password != confirm:
+        errs["confirm"] = "confirm"
+    if not terms:
+        errs["terms"] = "terms"
 
-    existing = await session.scalar(
+    if "login" not in errs and await session.scalar(
         select(User).where(User.login == login_value)
-    ) or await session.scalar(select(User).where(User.email == email_value))
-    if existing:
-        return RedirectResponse(register_error_url("exists", redirect_to), 303)
+    ):
+        errs["login"] = "login_taken"
+    if "email" not in errs and await session.scalar(
+        select(User).where(func.lower(User.email) == email_value)
+    ):
+        errs["email"] = "email_taken"
+
+    if errs:
+        return render_form(
+            request,
+            redirect_to,
+            values={
+                "login": login_value,
+                "email": email.strip(),
+                "nickname": nickname_value,
+            },
+            errs=errs,
+            status=422,
+        )
 
     user = User(
         lnurl_pubkey=None,
         login=login_value,
         email=email_value,
-        nickname=(nickname or "").strip() or "Satoshi",
+        nickname=nickname_value or "Satoshi",
         password_hash=hash_password(password),
     )
     session.add(user)
@@ -136,35 +133,3 @@ async def register_post(
     await session.refresh(user)
     request.session["user_id"] = user.id.hex
     return RedirectResponse(url=redirect_to, status_code=303)
-
-
-@router.post("/register/nostr/generate")
-async def register_nostr_generate(
-    session: Session,
-    request: Request,
-    nickname: Annotated[Optional[str], Form()] = None,
-    redirect_to: Annotated[Optional[str], Form()] = "/",
-):
-    redirect_to = safe_redirect(redirect_to)
-    return await create_nostr_user(
-        session, request, generate_keys(), nickname, redirect_to
-    )
-
-
-@router.post("/register/nostr")
-async def register_nostr_existing(
-    session: Session,
-    request: Request,
-    nostr_private_key: Annotated[str, Form()],
-    nickname: Annotated[Optional[str], Form()] = None,
-    redirect_to: Annotated[Optional[str], Form()] = "/",
-):
-    redirect_to = safe_redirect(redirect_to)
-    try:
-        keys = keys_from_private_key(nostr_private_key)
-    except NostrKeyError:
-        return RedirectResponse(
-            url=register_error_url("nostr_invalid", redirect_to),
-            status_code=303,
-        )
-    return await create_nostr_user(session, request, keys, nickname, redirect_to)

@@ -24,5 +24,9 @@ class Settings(BaseSettings):
 
     SESSION_MIDDLEWARE_SECRECT_KEY: str = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
 
+    # Administradores "de bootstrap": logins ou e-mails separados por vírgula.
+    # Além deles, quem tiver a permissão ADMIN/ROOT também administra.
+    ADMIN_USERS: str = ""
+
 
 ENV = Settings()
