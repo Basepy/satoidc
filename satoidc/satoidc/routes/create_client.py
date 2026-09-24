@@ -22,6 +22,7 @@ async def create_client_page(
 ):
     user_id = request.session.get("user_id")
     return templates.TemplateResponse(
+        request,
         "create_client.html",
         {"request": request, "user_id": user_id, "created": created},
     )

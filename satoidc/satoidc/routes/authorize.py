@@ -24,6 +24,7 @@ async def authorize_get(request: Request):
         ("?" + request.url.query) if request.url.query else ""
     )
     return templates.TemplateResponse(
+        request,
         "authorize.html",
         {
             "request": request,

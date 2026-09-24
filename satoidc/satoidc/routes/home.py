@@ -20,6 +20,7 @@ async def home(session: Session, request: Request):
         select(OAuth2Client)  # .where(OAuth2Client.client_id == UUID(user_id))
     )
     return templates.TemplateResponse(
+        request,
         "home.html",
         {
             "request": request,

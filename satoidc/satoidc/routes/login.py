@@ -123,6 +123,7 @@ async def login_page(
     request.session["login_nonce"] = login_nonce
     safe_next = safe_redirect(redirect_to)
     return templates.TemplateResponse(
+        request,
         "login.html",
         {
             "request": request,

@@ -62,6 +62,7 @@ async def create_nostr_user(
     request.session["user_id"] = user.id.hex
 
     return templates.TemplateResponse(
+        request,
         "register.html",
         {
             "request": request,
@@ -81,6 +82,7 @@ async def register_page(
 ):
     redirect_to = safe_redirect(redirect_to)
     return templates.TemplateResponse(
+        request,
         "register.html",
         {
             "request": request,
