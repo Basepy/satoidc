@@ -9,6 +9,7 @@ PUBLIC_PREFIXES = (
     "/oauth",  # tudo de OIDC
     "/api",  # APIs públicas (token, callbacks, etc.)
     "/auth/lnurl",  # endpoints de LNURL auth
+    "/auth/nostr",  # endpoints de Nostr auth
     "/.well-known",  # OIDC/OAuth discovery documents
 )
 

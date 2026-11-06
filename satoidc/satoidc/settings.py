@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     # LNURL-AUTH settings
     LNURL_K1_TTL_SECONDS: int = 60
 
+    # NOSTR-AUTH settings
+    NOSTR_CHALLENGE_TTL_SECONDS: int = 120
+
     # OAUTH2 JWT settings
     OAUTH2_JWT_ISS: str = "http://localhost:8000"
     OAUTH2_JWT_AUDIENCE: str = "SatOIDC-clients"

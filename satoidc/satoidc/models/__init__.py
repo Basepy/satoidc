@@ -45,6 +45,9 @@ class User:
     password_hash: Mapped[Optional[str]] = mapped_column(nullable=True)
     nickname: Mapped[str] = mapped_column(default="Satoshi")
     is_active: Mapped[bool] = mapped_column(default=True)
+    nostr_pubkey: Mapped[Optional[str]] = mapped_column(
+        unique=True, nullable=True, index=True, default=None
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), init=False, server_default=func.now()
     )
@@ -199,6 +202,32 @@ class LnurlAuthChallenge:
         primary_key=True, default_factory=lambda: token_hex(32)
     )
     action: Mapped[str] = mapped_column(default="login")
+    consumed: Mapped[bool] = mapped_column(default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), init=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        init=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    user: Mapped[Optional["User"]] = relationship("User", init=False)
+
+
+@table_registry.mapped_as_dataclass
+class NostrAuthChallenge:
+    __tablename__ = "nostr_auth_challenges"
+    action: Mapped[str]
+    url: Mapped[str]
+    user_id: Mapped[Optional[UUID]] = mapped_column(
+        ForeignKey("users.id"), nullable=True, default=None, index=True
+    )
+
+    k1: Mapped[str] = mapped_column(
+        primary_key=True, default_factory=lambda: token_hex(32)
+    )
     consumed: Mapped[bool] = mapped_column(default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), init=False, server_default=func.now()
