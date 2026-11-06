@@ -101,6 +101,7 @@ For a deeper technical map, start from [docs/README.md](docs/README.md), especia
 | Revocation                | Implemented    | Authlib endpoint registered.                                                 |
 | Refresh Token Grant       | Implemented    | Registered with refresh token issuance enabled and covered by focused tests. |
 | LNURL-auth                | Implemented    | Login, register, link and auth actions exist.                                |
+| Nostr login (API)         | Proposed       | Login, register and link by signed NIP-98 event; no UI yet. See the spec.    |
 | Implicit/Hybrid           | Not advertised | Not registered for the current provider contract.                            |
 
 ---
@@ -118,6 +119,8 @@ For a deeper technical map, start from [docs/README.md](docs/README.md), especia
 | `/.well-known/openid-configuration` | OIDC discovery metadata. |
 | `/.well-known/jwks.json` | Public signing keys. |
 | `/auth/lnurl/callback` | LNURL-auth wallet callback. |
+| `/auth/nostr/challenge` | Create a one-time Nostr login/register/link challenge. |
+| `/auth/nostr/verify` | Verify the signed Nostr event and run the challenge action. |
 
 ---
 
@@ -306,7 +309,7 @@ poetry run python -m compileall satoidc setup_wizard tests
 
 - [ ] Publish a stable OIDC contract and conformance checklist.
 - [x] Expose discovery at root `/.well-known/openid-configuration`.
-- [ ] Evaluate Nostr identity integration.
+- [ ] Evaluate Nostr identity integration (API proposed in [specs/features/nostr-login/spec.md](specs/features/nostr-login/spec.md); UI pending).
 - [ ] Revisit implicit/hybrid support before advertising those flows.
 - [ ] Track Authlib/FastAPI ecosystem support and simplify the adapter layer when viable.
 

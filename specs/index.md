@@ -32,6 +32,8 @@ Use this index to track active and historical specs.
 | [Home And Client Console Flow](flows/home-and-client-console.md) | draft | Auth/UI | 2026-05-13 |
 | [Profile Flow](flows/profile.md) | implemented | Auth/UI | 2026-05-15 |
 | [LNURL-auth Flow](flows/lnurl-auth.md) | draft | LNURL/Auth | 2026-05-06 |
+| [Nostr Login](features/nostr-login/spec.md) | review | Auth/Nostr/Security | 2026-11-06 |
+| [Nostr Auth Flow](flows/nostr-auth.md) | review | Nostr/Auth | 2026-11-06 |
 | [Relying-Party Example Flows](flows/relying-party-examples.md) | draft | Examples/OIDC | 2026-05-13 |
 | [Setup Wizard Flow](flows/setup-wizard.md) | draft | Bootstrap/Auth/UI | 2026-05-13 |
 | [OAuth Token Lifecycle Flow](flows/token-lifecycle.md) | draft | OAuth/OIDC | 2026-05-13 |
